@@ -194,4 +194,15 @@ extern "C" {
     c: *mut f32, ldc: c_int,
   ) -> cublasStatus_t;
   // TODO
+
+  // BLAS-like Extensions
+  pub fn cublasSdgmm(
+      handle: cublasHandle_t,
+      mode: cublasSideMode_t,
+      m: c_int, n: c_int,
+      a: *const f32, lda: c_int,
+      x: *const f32, incx: c_int,
+      c: *mut f32, ldc: c_int,
+  ) -> cublasStatus_t;
+  // TODO
 }

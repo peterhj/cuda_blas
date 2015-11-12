@@ -58,7 +58,7 @@ impl CublasTranspose {
 }
 
 pub struct CublasHandle {
-  ptr: cublasHandle_t,
+  pub ptr: cublasHandle_t,
 }
 
 impl !Send for CublasHandle {
