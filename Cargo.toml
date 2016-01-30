@@ -4,12 +4,15 @@ version = "0.1.0"
 authors = ["Peter Jin <peterhaijin@gmail.com>"]
 build = "build.rs"
 
-[lib]
-name = "cuda_blas"
-path = "src/lib.rs"
+[features]
+default = []
+cuda-7-0 = ["cuda/cuda-7-0"]
+cuda-7-5 = ["cuda/cuda-7-5"]
 
 [dependencies]
 libc = "*"
+cuda = { path = "../libcuda" }
 
-[dependencies.cuda]
-path = "../libcuda"
+[lib]
+name = "cuda_blas"
+path = "src/lib.rs"
