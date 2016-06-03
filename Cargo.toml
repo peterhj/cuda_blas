@@ -11,7 +11,8 @@ cuda-7-5 = ["cuda/cuda-7-5"]
 
 [dependencies]
 libc = "*"
-cuda = { path = "../libcuda" }
+#cuda = { path = "../libcuda" }
+cuda = { git = "https://github.com/peterhj/libcuda.git" }
 
 [lib]
 name = "cuda_blas"
