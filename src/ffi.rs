@@ -20,8 +20,16 @@ pub enum cublasStatus_t {
   LicenseError    = 16,
 }
 
-#[repr(C)]
-struct cublasContext;
+impl cublasStatus_t {
+  pub fn into_result(self) -> Result<(), cublasStatus_t> {
+    match self {
+      cublasStatus_t::Success => Ok(()),
+      e => Err(e),
+    }
+  }
+}
+
+pub enum cublasContext {}
 pub type cublasHandle_t = *mut cublasContext;
 
 #[derive(Clone, Copy)]
@@ -99,6 +107,22 @@ extern "C" {
     n: c_int,
     alpha: *const f32,
     x: *mut f32, incx: c_int,
+  ) -> cublasStatus_t;
+  pub fn cublasSdot_v2(
+      handle: cublasHandle_t,
+      n: c_int,
+      x: *const f32,
+      incx: c_int,
+      y: *const f32,
+      incy: c_int,
+      result: *mut f32,
+  ) -> cublasStatus_t;
+  pub fn cublasSnrm2_v2(
+      handle: cublasHandle_t,
+      n: c_int,
+      x: *const f32,
+      incx: c_int,
+      result: *mut f32,
   ) -> cublasStatus_t;
   // TODO
 
