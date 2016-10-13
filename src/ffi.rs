@@ -21,6 +21,13 @@ pub enum cublasStatus_t {
 }
 
 impl cublasStatus_t {
+  pub fn is_ok(&self) -> bool {
+    match self {
+      &cublasStatus_t::Success => true,
+      _ => false,
+    }
+  }
+
   pub fn into_result(self) -> Result<(), cublasStatus_t> {
     match self {
       cublasStatus_t::Success => Ok(()),

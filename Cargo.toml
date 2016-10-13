@@ -11,8 +11,8 @@ authors = ["Peter Jin <peterhaijin@gmail.com>"]
 
 [dependencies]
 libc = "*"
-#cuda = { path = "../libcuda" }
-cuda = { git = "https://github.com/peterhj/libcuda.git" }
+cuda = { path = "../libcuda" }
+#cuda = { git = "https://github.com/peterhj/libcuda.git" }
 
 [lib]
 name = "cuda_blas"
