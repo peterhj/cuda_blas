@@ -8,8 +8,8 @@ respository = "https://github.com/peterhj/libcuda_blas"
 keywords = ["cuda", "blas", "cublas"]
 
 [dependencies]
-libc = "*"
-cuda = { git = "https://github.com/peterhj/libcuda.git" }
+libc = "^0.2"
+cuda = "^0.1"
 
 [lib]
 name = "cuda_blas"
