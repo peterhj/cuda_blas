@@ -2,17 +2,14 @@
 name = "cuda_blas"
 version = "0.1.0"
 authors = ["Peter Jin <peterhaijin@gmail.com>"]
-#build = "build.rs"
-
-#[features]
-#default = []
-#cuda-7-0 = ["cuda/cuda-7-0"]
-#cuda-7-5 = ["cuda/cuda-7-5"]
+license = "BSD-2-Clause"
+description = "cuBLAS API bindings."
+respository = "https://github.com/peterhj/libcuda_blas"
+keywords = ["cuda", "blas", "cublas"]
 
 [dependencies]
 libc = "*"
-cuda = { path = "../libcuda" }
-#cuda = { git = "https://github.com/peterhj/libcuda.git" }
+cuda = { git = "https://github.com/peterhj/libcuda.git" }
 
 [lib]
 name = "cuda_blas"
