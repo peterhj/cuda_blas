@@ -9,7 +9,9 @@ use cuda::runtime::{CudaStream};
 
 use libc::{c_int};
 
+pub mod bind_ffi;
 pub mod ffi;
+pub mod new;
 
 #[derive(Clone, Copy, Debug)]
 pub struct CublasError {
