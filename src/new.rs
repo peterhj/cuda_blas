@@ -1,9 +1,8 @@
 use bind_ffi::*;
 
-//use cuda::bind_ffi::runtime::*;
 use cuda::runtime_new::*;
 
-use std::os::raw::{c_int};
+//use std::os::raw::{c_int};
 use std::ptr::{null_mut};
 
 #[derive(Clone, Copy, Debug)]
@@ -43,7 +42,7 @@ impl CublasTranspose {
   }
 }
 
-pub trait CublasExt<T> where T: Copy {
+pub trait CublasBlasExt<T> where T: Copy {
   unsafe fn gemv(&self,
       a_trans: CublasTranspose,
       m: i32, n: i32,
@@ -108,7 +107,7 @@ impl CublasHandle {
   }
 }
 
-impl CublasExt<f32> for CublasHandle {
+impl CublasBlasExt<f32> for CublasHandle {
   unsafe fn gemv(&self,
       a_trans: CublasTranspose,
       m: i32, n: i32,

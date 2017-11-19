@@ -4,8 +4,14 @@ use std::env;
 use std::path::{PathBuf};
 
 fn main() {
+  let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+  let cuda_dir = PathBuf::from(match env::var("CUDA_HOME") {
+    Ok(path) => path,
+    Err(_) => "/usr/local/cuda".to_owned(),
+  });
   let cublas_bindings = bindgen::Builder::default()
-    .header("/usr/local/cuda-7.5/include/cublas_v2.h")
+    .clang_arg(format!("-I{}", cuda_dir.join("include").as_os_str().to_str().unwrap()))
+    .header("wrap.h")
     .link("cublas")
     .whitelist_recursively(false)
     .whitelisted_type("cublasContext")
@@ -38,7 +44,6 @@ fn main() {
     //.whitelisted_function("cublasGemmEx_v2")
     .generate()
     .expect("bindgen failed to generate cublas bindings");
-  let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
   cublas_bindings
     .write_to_file(out_dir.join("cublas_bind.rs"))
     .expect("bindgen failed to write cublas bindings");
