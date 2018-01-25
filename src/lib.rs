@@ -1,48 +1,37 @@
-#![feature(optin_builtin_traits)]
+#[allow(non_upper_case_globals)]
 
 extern crate cuda;
-extern crate libc;
 
 use ffi::*;
 
-use cuda::runtime::{CudaStream};
+use cuda::runtime::*;
 
-use libc::{c_int};
+//use std::os::raw::{c_int};
+use std::ptr::{null_mut};
 
-pub mod bind_ffi;
 pub mod ffi;
-pub mod new;
 
 #[derive(Clone, Copy, Debug)]
-pub struct CublasError {
-  status_code: cublasStatus_t,
-}
-
-impl CublasError {
-  pub fn new(status_code: cublasStatus_t) -> CublasError {
-    match status_code {
-      cublasStatus_t::Success => unreachable!(),
-      c => CublasError{status_code: c},
-    }
-  }
-}
+pub struct CublasError(pub cublasStatus_t);
 
 pub type CublasResult<T> = Result<T, CublasError>;
 
+#[derive(Clone, Copy, Debug)]
 pub enum CublasPointerMode {
   Host,
   Device,
 }
 
 impl CublasPointerMode {
-  pub fn to_ffi(&self) -> cublasPointerMode_t {
+  pub fn to_bind_type(&self) -> cublasPointerMode_t {
     match self {
-      &CublasPointerMode::Host   => cublasPointerMode_t::CUBLAS_POINTER_MODE_HOST,
-      &CublasPointerMode::Device => cublasPointerMode_t::CUBLAS_POINTER_MODE_DEVICE,
+      &CublasPointerMode::Host   => cublasPointerMode_t_CUBLAS_POINTER_MODE_HOST,
+      &CublasPointerMode::Device => cublasPointerMode_t_CUBLAS_POINTER_MODE_DEVICE,
     }
   }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub enum CublasTranspose {
   N,
   T,
@@ -50,20 +39,39 @@ pub enum CublasTranspose {
 }
 
 impl CublasTranspose {
-  pub fn to_ffi(&self) -> cublasOperation_t {
+  pub fn to_bind_type(&self) -> cublasOperation_t {
     match self {
-      &CublasTranspose::N => cublasOperation_t::CUBLAS_OP_N,
-      &CublasTranspose::T => cublasOperation_t::CUBLAS_OP_T,
-      &CublasTranspose::H => cublasOperation_t::CUBLAS_OP_C,
+      &CublasTranspose::N => cublasOperation_t_CUBLAS_OP_N,
+      &CublasTranspose::T => cublasOperation_t_CUBLAS_OP_T,
+      &CublasTranspose::H => cublasOperation_t_CUBLAS_OP_C,
     }
   }
 }
 
-pub struct CublasHandle {
-  pub ptr: cublasHandle_t,
+pub trait CublasBlasExt<T> where T: Copy {
+  unsafe fn gemv(&self,
+      a_trans: CublasTranspose,
+      m: i32, n: i32,
+      alpha: *const T,
+      a: *const T, lda: i32,
+      x: *const T, incx: i32,
+      beta: *const T,
+      y: *mut T, incy: i32)
+      -> CublasResult<()>;
+  unsafe fn gemm(&self,
+      a_trans: CublasTranspose,
+      b_trans: CublasTranspose,
+      m: i32, n: i32, k: i32,
+      alpha: *const T,
+      a: *const T, lda: i32,
+      b: *const T, ldb: i32,
+      beta: *const T,
+      c: *mut T, ldc: i32)
+      -> CublasResult<()>;
 }
 
-impl !Send for CublasHandle {
+pub struct CublasHandle {
+  ptr: cublasHandle_t,
 }
 
 impl CublasHandle {
@@ -71,150 +79,90 @@ impl CublasHandle {
     let mut handle: cublasHandle_t = 0 as cublasHandle_t;
     let status_code = unsafe { cublasCreate_v2(&mut handle as *mut cublasHandle_t) };
     match status_code {
-      cublasStatus_t::Success => Ok(CublasHandle{ptr: handle}),
-      c => Err(CublasError::new(c)),
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(CublasHandle{ptr: handle}),
+      e => Err(CublasError(e)),
     }
   }
 
-  pub fn set_stream<'a>(&'a self, stream: &'a CudaStream) -> CublasResult<()> {
-    let status_code = unsafe { cublasSetStream_v2(self.ptr, stream.ptr) };
+  pub fn reset_stream(&self) -> CublasResult<()> {
+    let status_code = unsafe { cublasSetStream_v2(self.as_ptr(), null_mut()) };
     match status_code {
-      cublasStatus_t::Success => Ok(()),
-      c => Err(CublasError::new(c)),
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }
+  }
+
+  pub fn set_stream(&self, stream: &CudaStream) -> CublasResult<()> {
+    let status_code = unsafe { cublasSetStream_v2(self.as_ptr(), stream.as_ptr()) };
+    match status_code {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
     }
   }
 
   pub fn set_pointer_mode(&self, pointer_mode: CublasPointerMode) -> CublasResult<()> {
-    let status_code = unsafe { cublasSetPointerMode_v2(self.ptr, pointer_mode.to_ffi()) };
+    let status_code = unsafe { cublasSetPointerMode_v2(self.as_ptr(), pointer_mode.to_bind_type()) };
     match status_code {
-      cublasStatus_t::Success => Ok(()),
-      c => Err(CublasError::new(c)),
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
     }
   }
-}
 
-pub unsafe fn cublas_saxpy(
-  handle: &CublasHandle,
-  n: usize,
-  alpha: f32,
-  x: *const f32, incx: usize,
-  y: *mut f32, incy: usize,
-) -> CublasResult<()>
-{
-  let status_code = {
-    cublasSaxpy_v2(
-      handle.ptr,
-      n as c_int,
-      &alpha as *const f32,
-      x, incx as c_int,
-      y, incy as c_int,
-    )
-  };
-  match status_code {
-    cublasStatus_t::Success => Ok(()),
-    c => Err(CublasError::new(c)),
+  pub unsafe fn as_ptr(&self) -> cublasHandle_t {
+    self.ptr
   }
 }
 
-pub unsafe fn cublas_scopy(
-  handle: &CublasHandle,
-  n: usize,
-  x: *const f32, incx: usize,
-  y: *mut f32, incy: usize,
-) -> CublasResult<()>
-{
-  let status_code = {
-    cublasScopy_v2(
-      handle.ptr,
-      n as c_int,
-      x, incx as c_int,
-      y, incy as c_int,
-    )
-  };
-  match status_code {
-    cublasStatus_t::Success => Ok(()),
-    c => Err(CublasError::new(c)),
+impl CublasBlasExt<f32> for CublasHandle {
+  unsafe fn gemv(&self,
+      a_trans: CublasTranspose,
+      m: i32, n: i32,
+      alpha: *const f32,
+      a: *const f32, lda: i32,
+      x: *const f32, incx: i32,
+      beta: *const f32,
+      y: *mut f32, incy: i32)
+      -> CublasResult<()>
+  {
+    let e = cublasSgemv_v2(
+        self.as_ptr(),
+        a_trans.to_bind_type(),
+        m, n,
+        alpha,
+        a, lda,
+        x, incx,
+        beta,
+        y, incy);
+    match e {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      _ => Err(CublasError(e)),
+    }
   }
-}
 
-pub unsafe fn cublas_sscal(
-  handle: &CublasHandle,
-  n: usize,
-  alpha: f32,
-  x: *mut f32, incx: usize,
-) -> CublasResult<()>
-{
-  let status_code = {
-    // FIXME: scalar passing convention depends on current context settings.
-    cublasSscal_v2(
-      handle.ptr,
-      n as c_int,
-      &alpha as *const f32,
-      x, incx as c_int,
-    )
-  };
-  match status_code {
-    cublasStatus_t::Success => Ok(()),
-    c => Err(CublasError::new(c)),
-  }
-}
-
-pub unsafe fn cublas_sgemv(
-  handle: &CublasHandle,
-  a_trans: CublasTranspose,
-  m: usize, n: usize,
-  alpha: f32,
-  a: *const f32, lda: usize,
-  x: *const f32, incx: usize,
-  beta: f32,
-  y: *mut f32, incy: usize,
-) -> CublasResult<()>
-{
-  let status_code = {
-    // FIXME: scalar passing convention depends on current context settings.
-    cublasSgemv_v2(
-      handle.ptr,
-      a_trans.to_ffi(),
-      m as c_int, n as c_int,
-      &alpha as *const f32,
-      a, lda as c_int,
-      x, incx as c_int,
-      &beta as *const f32,
-      y, incy as c_int,
-    )
-  };
-  match status_code {
-    cublasStatus_t::Success => Ok(()),
-    c => Err(CublasError::new(c)),
-  }
-}
-
-pub unsafe fn cublas_sgemm(
-  handle: &CublasHandle,
-  a_trans: CublasTranspose, b_trans: CublasTranspose,
-  m: usize, n: usize, k: usize,
-  alpha: f32,
-  a: *const f32, lda: usize,
-  b: *const f32, ldb: usize,
-  beta: f32,
-  c: *mut f32, ldc: usize,
-) -> CublasResult<()>
-{
-  let status_code = {
-    // FIXME: scalar passing convention depends on current context settings.
-    cublasSgemm_v2(
-      handle.ptr,
-      a_trans.to_ffi(), b_trans.to_ffi(),
-      m as c_int, n as c_int, k as c_int,
-      &alpha as *const f32,
-      a, lda as c_int,
-      b, ldb as c_int,
-      &beta as *const f32,
-      c, ldc as c_int,
-    )
-  };
-  match status_code {
-    cublasStatus_t::Success => Ok(()),
-    c => Err(CublasError::new(c)),
+  unsafe fn gemm(&self,
+      a_trans: CublasTranspose,
+      b_trans: CublasTranspose,
+      m: i32, n: i32, k: i32,
+      alpha: *const f32,
+      a: *const f32, lda: i32,
+      b: *const f32, ldb: i32,
+      beta: *const f32,
+      c: *mut f32, ldc: i32)
+      -> CublasResult<()>
+  {
+    let e = cublasSgemm_v2(
+        self.as_ptr(),
+        a_trans.to_bind_type(),
+        b_trans.to_bind_type(),
+        m, n, k,
+        alpha,
+        a, lda,
+        b, ldb,
+        beta,
+        c, ldc);
+    match e {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      _ => Err(CublasError(e)),
+    }
   }
 }
