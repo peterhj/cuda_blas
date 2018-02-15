@@ -9,6 +9,9 @@ fn main() {
     Ok(path) => path,
     Err(_) => "/usr/local/cuda".to_owned(),
   });
+
+  println!("cargo:rustc-link-lib=cublas");
+
   let cublas_bindings = bindgen::Builder::default()
     .clang_arg(format!("-I{}", cuda_dir.join("include").as_os_str().to_str().unwrap()))
     .header("wrap.h")
