@@ -104,7 +104,7 @@ impl CublasHandle {
   }
 
   pub fn set_stream(&mut self, stream: &mut CudaStream) -> CublasResult<()> {
-    let status = unsafe { cublasSetStream_v2(self.as_mut_ptr(), stream.as_ptr()) };
+    let status = unsafe { cublasSetStream_v2(self.as_mut_ptr(), stream.as_mut_ptr()) };
     match status {
       cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
       e => Err(CublasError(e)),
