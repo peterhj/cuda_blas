@@ -23,10 +23,25 @@ pub enum CublasPointerMode {
 }
 
 impl CublasPointerMode {
-  pub fn to_bind_type(&self) -> cublasPointerMode_t {
+  pub fn to_cublas(&self) -> cublasPointerMode_t {
     match self {
       &CublasPointerMode::Host   => cublasPointerMode_t_CUBLAS_POINTER_MODE_HOST,
       &CublasPointerMode::Device => cublasPointerMode_t_CUBLAS_POINTER_MODE_DEVICE,
+    }
+  }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum CublasAtomicsMode {
+  NotAllowed,
+  Allowed,
+}
+
+impl CublasAtomicsMode {
+  pub fn to_cublas(&self) -> cublasAtomicsMode_t {
+    match self {
+      &CublasAtomicsMode::NotAllowed    => cublasAtomicsMode_t_CUBLAS_ATOMICS_NOT_ALLOWED,
+      &CublasAtomicsMode::Allowed       => cublasAtomicsMode_t_CUBLAS_ATOMICS_ALLOWED,
     }
   }
 }
@@ -39,7 +54,7 @@ pub enum CublasTranspose {
 }
 
 impl CublasTranspose {
-  pub fn to_bind_type(&self) -> cublasOperation_t {
+  pub fn to_cublas(&self) -> cublasOperation_t {
     match self {
       &CublasTranspose::N => cublasOperation_t_CUBLAS_OP_N,
       &CublasTranspose::T => cublasOperation_t_CUBLAS_OP_T,
@@ -49,7 +64,7 @@ impl CublasTranspose {
 }
 
 pub trait CublasBlasExt<T> where T: Copy {
-  unsafe fn gemv(&self,
+  unsafe fn gemv(&mut self,
       a_trans: CublasTranspose,
       m: i32, n: i32,
       alpha: *const T,
@@ -58,7 +73,7 @@ pub trait CublasBlasExt<T> where T: Copy {
       beta: *const T,
       y: *mut T, incy: i32)
       -> CublasResult<()>;
-  unsafe fn gemm(&self,
+  unsafe fn gemm(&mut self,
       a_trans: CublasTranspose,
       b_trans: CublasTranspose,
       m: i32, n: i32, k: i32,
@@ -76,45 +91,45 @@ pub struct CublasHandle {
 
 impl CublasHandle {
   pub fn create() -> CublasResult<CublasHandle> {
-    let mut handle: cublasHandle_t = 0 as cublasHandle_t;
-    let status_code = unsafe { cublasCreate_v2(&mut handle as *mut cublasHandle_t) };
-    match status_code {
-      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(CublasHandle{ptr: handle}),
+    let mut ptr = null_mut();
+    let status = unsafe { cublasCreate_v2(&mut ptr as *mut cublasHandle_t) };
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(CublasHandle{ptr: ptr}),
       e => Err(CublasError(e)),
     }
   }
 
-  pub fn reset_stream(&self) -> CublasResult<()> {
-    let status_code = unsafe { cublasSetStream_v2(self.as_ptr(), null_mut()) };
-    match status_code {
-      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
-      e => Err(CublasError(e)),
-    }
-  }
-
-  pub fn set_stream(&self, stream: &CudaStream) -> CublasResult<()> {
-    let status_code = unsafe { cublasSetStream_v2(self.as_ptr(), stream.as_ptr()) };
-    match status_code {
-      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
-      e => Err(CublasError(e)),
-    }
-  }
-
-  pub fn set_pointer_mode(&self, pointer_mode: CublasPointerMode) -> CublasResult<()> {
-    let status_code = unsafe { cublasSetPointerMode_v2(self.as_ptr(), pointer_mode.to_bind_type()) };
-    match status_code {
-      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
-      e => Err(CublasError(e)),
-    }
-  }
-
-  pub unsafe fn as_ptr(&self) -> cublasHandle_t {
+  pub unsafe fn as_mut_ptr(&mut self) -> cublasHandle_t {
     self.ptr
+  }
+
+  pub fn set_stream(&mut self, stream: &mut CudaStream) -> CublasResult<()> {
+    let status = unsafe { cublasSetStream_v2(self.as_mut_ptr(), stream.as_ptr()) };
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }
+  }
+
+  pub fn set_pointer_mode(&mut self, pointer_mode: CublasPointerMode) -> CublasResult<()> {
+    let status = unsafe { cublasSetPointerMode_v2(self.as_mut_ptr(), pointer_mode.to_cublas()) };
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }
+  }
+
+  pub fn set_atomics_mode(&mut self, atomics_mode: CublasAtomicsMode) -> CublasResult<()> {
+    let status = unsafe { cublasSetAtomicsMode(self.as_mut_ptr(), atomics_mode.to_cublas()) };
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }
   }
 }
 
 impl CublasBlasExt<f32> for CublasHandle {
-  unsafe fn gemv(&self,
+  unsafe fn gemv(&mut self,
       a_trans: CublasTranspose,
       m: i32, n: i32,
       alpha: *const f32,
@@ -124,22 +139,22 @@ impl CublasBlasExt<f32> for CublasHandle {
       y: *mut f32, incy: i32)
       -> CublasResult<()>
   {
-    let e = cublasSgemv_v2(
-        self.as_ptr(),
-        a_trans.to_bind_type(),
+    let status = cublasSgemv_v2(
+        self.as_mut_ptr(),
+        a_trans.to_cublas(),
         m, n,
         alpha,
         a, lda,
         x, incx,
         beta,
         y, incy);
-    match e {
+    match status {
       cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
-      _ => Err(CublasError(e)),
+      e => Err(CublasError(e)),
     }
   }
 
-  unsafe fn gemm(&self,
+  unsafe fn gemm(&mut self,
       a_trans: CublasTranspose,
       b_trans: CublasTranspose,
       m: i32, n: i32, k: i32,
@@ -150,19 +165,19 @@ impl CublasBlasExt<f32> for CublasHandle {
       c: *mut f32, ldc: i32)
       -> CublasResult<()>
   {
-    let e = cublasSgemm_v2(
-        self.as_ptr(),
-        a_trans.to_bind_type(),
-        b_trans.to_bind_type(),
+    let status = cublasSgemm_v2(
+        self.as_mut_ptr(),
+        a_trans.to_cublas(),
+        b_trans.to_cublas(),
         m, n, k,
         alpha,
         a, lda,
         b, ldb,
         beta,
         c, ldc);
-    match e {
+    match status {
       cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
-      _ => Err(CublasError(e)),
+      e => Err(CublasError(e)),
     }
   }
 }

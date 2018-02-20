@@ -15,7 +15,7 @@ fn main() {
   let cublas_bindings = bindgen::Builder::default()
     .clang_arg(format!("-I{}", cuda_dir.join("include").as_os_str().to_str().unwrap()))
     .header("wrap.h")
-    .link("cublas")
+    //.link("cublas")
     .whitelist_recursively(false)
     .whitelist_type("cublasContext")
     .whitelist_type("cublasHandle_t")
