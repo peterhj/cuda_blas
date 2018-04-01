@@ -89,6 +89,9 @@ pub struct CublasHandle {
   ptr: cublasHandle_t,
 }
 
+unsafe impl Send for CublasHandle {}
+unsafe impl Sync for CublasHandle {}
+
 impl CublasHandle {
   pub fn create() -> CublasResult<CublasHandle> {
     let mut ptr = null_mut();
