@@ -14,9 +14,8 @@ fn main() {
   println!("cargo:rustc-link-lib=cublas");
 
   let cublas_bindings = bindgen::Builder::default()
-    /*.clang_arg("-x c++")
+    .clang_arg("-x").clang_arg("c++")
     .clang_arg("-std=c++11")
-    .clang_arg("-D__CUDACC__")*/
     .clang_arg(format!("-I{}", cuda_dir.join("include").as_os_str().to_str().unwrap()))
     .header("wrap.h")
     //.link("cublas")

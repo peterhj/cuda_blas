@@ -242,28 +242,15 @@ impl CublasBlasExt<f64> for CublasHandle {
 
 impl CublasBlasExt<f16_stub> for CublasHandle {
   unsafe fn gemv(&mut self,
-      a_trans: CublasTranspose,
-      m: i32, n: i32,
-      alpha: *const f16_stub,
-      a: *const f16_stub, lda: i32,
-      x: *const f16_stub, incx: i32,
-      beta: *const f16_stub,
-      y: *mut f16_stub, incy: i32)
+      _a_trans: CublasTranspose,
+      _m: i32, _n: i32,
+      _alpha: *const f16_stub,
+      _a: *const f16_stub, _lda: i32,
+      _x: *const f16_stub, _incx: i32,
+      _beta: *const f16_stub,
+      _y: *mut f16_stub, _incy: i32)
       -> CublasResult<()>
   {
-    /*let status = cublasHgemv(
-        self.as_mut_ptr(),
-        a_trans.to_cublas(),
-        m, n,
-        alpha,
-        a, lda,
-        x, incx,
-        beta,
-        y, incy);
-    match status {
-      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
-      e => Err(CublasError(e)),
-    }*/
     // TODO: `cublasHgemv` does not exist.
     unimplemented!();
   }
