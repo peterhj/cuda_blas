@@ -48,6 +48,21 @@ impl CublasAtomicsMode {
 }
 
 #[derive(Clone, Copy, Debug)]
+pub enum CublasMathMode {
+  Default,
+  TensorOp,
+}
+
+impl CublasMathMode {
+  pub fn to_cublas(&self) -> cublasMath_t {
+    match self {
+      &CublasMathMode::Default  => cublasMath_t_CUBLAS_DEFAULT_MATH,
+      &CublasMathMode::TensorOp => cublasMath_t_CUBLAS_TENSOR_OP_MATH,
+    }
+  }
+}
+
+#[derive(Clone, Copy, Debug)]
 pub enum CublasTranspose {
   N,
   T,
@@ -125,6 +140,14 @@ impl CublasHandle {
 
   pub fn set_atomics_mode(&mut self, atomics_mode: CublasAtomicsMode) -> CublasResult<()> {
     let status = unsafe { cublasSetAtomicsMode(self.as_mut_ptr(), atomics_mode.to_cublas()) };
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }
+  }
+
+  pub fn set_math_mode(&mut self, math_mode: CublasMathMode) -> CublasResult<()> {
+    let status = unsafe { cublasSetMathMode(self.as_mut_ptr(), math_mode.to_cublas()) };
     match status {
       cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
       e => Err(CublasError(e)),

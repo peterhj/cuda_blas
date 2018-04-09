@@ -26,14 +26,14 @@ fn main() {
     .whitelist_type("cublasOperation_t")
     .whitelist_type("cublasPointerMode_t")
     .whitelist_type("cublasAtomicsMode_t")
-    //.whitelist_type("cublasGemmAlgo_t")
-    //.whitelist_type("cudaDataType_t")
+    .whitelist_type("cublasMath_t")
     // Helper functions.
     .whitelist_function("cublasCreate_v2")
     .whitelist_function("cublasDestroy_v2")
     .whitelist_function("cublasSetStream_v2")
     .whitelist_function("cublasSetPointerMode_v2")
     .whitelist_function("cublasSetAtomicsMode")
+    .whitelist_function("cublasSetMathMode")
     // Level 1 BLAS.
     .whitelist_function("cublasSaxpy_v2")
     .whitelist_function("cublasScopy_v2")
