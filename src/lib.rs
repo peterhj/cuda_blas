@@ -1,12 +1,13 @@
 #![allow(non_upper_case_globals)]
 
 extern crate cuda;
+extern crate float;
 
 use ffi::*;
 
 use cuda::runtime::*;
+use float::stub::{f16_stub};
 
-//use std::os::raw::{c_int};
 use std::ptr::{null_mut};
 
 pub mod ffi;
@@ -169,6 +170,116 @@ impl CublasBlasExt<f32> for CublasHandle {
       -> CublasResult<()>
   {
     let status = cublasSgemm_v2(
+        self.as_mut_ptr(),
+        a_trans.to_cublas(),
+        b_trans.to_cublas(),
+        m, n, k,
+        alpha,
+        a, lda,
+        b, ldb,
+        beta,
+        c, ldc);
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }
+  }
+}
+
+impl CublasBlasExt<f64> for CublasHandle {
+  unsafe fn gemv(&mut self,
+      a_trans: CublasTranspose,
+      m: i32, n: i32,
+      alpha: *const f64,
+      a: *const f64, lda: i32,
+      x: *const f64, incx: i32,
+      beta: *const f64,
+      y: *mut f64, incy: i32)
+      -> CublasResult<()>
+  {
+    let status = cublasDgemv_v2(
+        self.as_mut_ptr(),
+        a_trans.to_cublas(),
+        m, n,
+        alpha,
+        a, lda,
+        x, incx,
+        beta,
+        y, incy);
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }
+  }
+
+  unsafe fn gemm(&mut self,
+      a_trans: CublasTranspose,
+      b_trans: CublasTranspose,
+      m: i32, n: i32, k: i32,
+      alpha: *const f64,
+      a: *const f64, lda: i32,
+      b: *const f64, ldb: i32,
+      beta: *const f64,
+      c: *mut f64, ldc: i32)
+      -> CublasResult<()>
+  {
+    let status = cublasDgemm_v2(
+        self.as_mut_ptr(),
+        a_trans.to_cublas(),
+        b_trans.to_cublas(),
+        m, n, k,
+        alpha,
+        a, lda,
+        b, ldb,
+        beta,
+        c, ldc);
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }
+  }
+}
+
+impl CublasBlasExt<f16_stub> for CublasHandle {
+  unsafe fn gemv(&mut self,
+      a_trans: CublasTranspose,
+      m: i32, n: i32,
+      alpha: *const f16_stub,
+      a: *const f16_stub, lda: i32,
+      x: *const f16_stub, incx: i32,
+      beta: *const f16_stub,
+      y: *mut f16_stub, incy: i32)
+      -> CublasResult<()>
+  {
+    /*let status = cublasHgemv(
+        self.as_mut_ptr(),
+        a_trans.to_cublas(),
+        m, n,
+        alpha,
+        a, lda,
+        x, incx,
+        beta,
+        y, incy);
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }*/
+    // TODO: `cublasHgemv` does not exist.
+    unimplemented!();
+  }
+
+  unsafe fn gemm(&mut self,
+      a_trans: CublasTranspose,
+      b_trans: CublasTranspose,
+      m: i32, n: i32, k: i32,
+      alpha: *const f16_stub,
+      a: *const f16_stub, lda: i32,
+      b: *const f16_stub, ldb: i32,
+      beta: *const f16_stub,
+      c: *mut f16_stub, ldc: i32)
+      -> CublasResult<()>
+  {
+    let status = cublasHgemm(
         self.as_mut_ptr(),
         a_trans.to_cublas(),
         b_trans.to_cublas(),

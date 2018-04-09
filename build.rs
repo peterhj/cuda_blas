@@ -1,6 +1,7 @@
 extern crate bindgen;
 
 use std::env;
+use std::fs;
 use std::path::{PathBuf};
 
 fn main() {
@@ -13,6 +14,9 @@ fn main() {
   println!("cargo:rustc-link-lib=cublas");
 
   let cublas_bindings = bindgen::Builder::default()
+    /*.clang_arg("-x c++")
+    .clang_arg("-std=c++11")
+    .clang_arg("-D__CUDACC__")*/
     .clang_arg(format!("-I{}", cuda_dir.join("include").as_os_str().to_str().unwrap()))
     .header("wrap.h")
     //.link("cublas")
@@ -39,14 +43,18 @@ fn main() {
     .whitelist_function("cublasSscal_v2")
     // Level 2 BLAS.
     .whitelist_function("cublasSgemv_v2")
+    .whitelist_function("cublasDgemv_v2")
     // Level 3 BLAS.
     .whitelist_function("cublasSgemm_v2")
+    .whitelist_function("cublasDgemm_v2")
+    .whitelist_function("cublasHgemm")
     //.whitelist_function("cublasSgemmBatched_v2")
     //.whitelist_function("cublasSgemmStridedBatched_v2")
     // BLAS-like extensions.
     //.whitelist_function("cublasGemmEx_v2")
     .generate()
     .expect("bindgen failed to generate cublas bindings");
+  fs::remove_file(out_dir.join("cublas_bind.rs")).ok();
   cublas_bindings
     .write_to_file(out_dir.join("cublas_bind.rs"))
     .expect("bindgen failed to write cublas bindings");
