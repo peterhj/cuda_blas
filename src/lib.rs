@@ -5,6 +5,7 @@ extern crate float;
 
 use ffi::*;
 
+use cuda::ffi::library_types::*;
 use cuda::runtime::*;
 use float::stub::{f16_stub};
 
@@ -289,16 +290,18 @@ impl CublasBlasExt<f16_stub> for CublasHandle {
       c: *mut f16_stub, ldc: i32)
       -> CublasResult<()>
   {
-    let status = cublasHgemm(
+    let status = cublasGemmEx(
         self.as_mut_ptr(),
         a_trans.to_cublas(),
         b_trans.to_cublas(),
         m, n, k,
-        alpha,
-        a, lda,
-        b, ldb,
-        beta,
-        c, ldc);
+        alpha as *const _,
+        a as *const _, cudaDataType_t_CUDA_R_16F, lda,
+        b as *const _, cudaDataType_t_CUDA_R_16F, ldb,
+        beta as *const _,
+        c as *mut _, cudaDataType_t_CUDA_R_16F, ldc,
+        cudaDataType_t_CUDA_R_16F,
+        cublasGemmAlgo_t_CUBLAS_GEMM_DFALT_TENSOR_OP);
     match status {
       cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
       e => Err(CublasError(e)),

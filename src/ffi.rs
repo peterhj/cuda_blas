@@ -2,6 +2,7 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 
+use cuda::ffi::library_types::{cudaDataType};
 use cuda::ffi::runtime::{cudaStream_t};
 use float::stub::{f16_stub};
 

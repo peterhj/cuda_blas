@@ -27,6 +27,7 @@ fn main() {
     .whitelist_type("cublasPointerMode_t")
     .whitelist_type("cublasAtomicsMode_t")
     .whitelist_type("cublasMath_t")
+    .whitelist_type("cublasGemmAlgo_t")
     // Helper functions.
     .whitelist_function("cublasCreate_v2")
     .whitelist_function("cublasDestroy_v2")
@@ -46,11 +47,11 @@ fn main() {
     // Level 3 BLAS.
     .whitelist_function("cublasSgemm_v2")
     .whitelist_function("cublasDgemm_v2")
-    .whitelist_function("cublasHgemm")
+    //.whitelist_function("cublasHgemm")
     //.whitelist_function("cublasSgemmBatched_v2")
     //.whitelist_function("cublasSgemmStridedBatched_v2")
     // BLAS-like extensions.
-    //.whitelist_function("cublasGemmEx_v2")
+    .whitelist_function("cublasGemmEx")
     .generate()
     .expect("bindgen failed to generate cublas bindings");
   fs::remove_file(out_dir.join("cublas_bind.rs")).ok();
