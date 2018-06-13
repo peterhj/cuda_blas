@@ -48,7 +48,7 @@ impl CublasAtomicsMode {
   }
 }
 
-#[derive(Clone, Copy, Debug)]
+/*#[derive(Clone, Copy, Debug)]
 pub enum CublasMathMode {
   Default,
   TensorOp,
@@ -61,7 +61,7 @@ impl CublasMathMode {
       &CublasMathMode::TensorOp => cublasMath_t_CUBLAS_TENSOR_OP_MATH,
     }
   }
-}
+}*/
 
 #[derive(Clone, Copy, Debug)]
 pub enum CublasTranspose {
@@ -147,13 +147,13 @@ impl CublasHandle {
     }
   }
 
-  pub fn set_math_mode(&mut self, math_mode: CublasMathMode) -> CublasResult<()> {
+  /*pub fn set_math_mode(&mut self, math_mode: CublasMathMode) -> CublasResult<()> {
     let status = unsafe { cublasSetMathMode(self.as_mut_ptr(), math_mode.to_cublas()) };
     match status {
       cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
       e => Err(CublasError(e)),
     }
-  }
+  }*/
 }
 
 impl CublasBlasExt<f32> for CublasHandle {
@@ -264,7 +264,7 @@ impl CublasBlasExt<f64> for CublasHandle {
   }
 }
 
-impl CublasBlasExt<f16_stub> for CublasHandle {
+/*impl CublasBlasExt<f16_stub> for CublasHandle {
   unsafe fn gemv(&mut self,
       _a_trans: CublasTranspose,
       _m: i32, _n: i32,
@@ -307,4 +307,4 @@ impl CublasBlasExt<f16_stub> for CublasHandle {
       e => Err(CublasError(e)),
     }
   }
-}
+}*/
