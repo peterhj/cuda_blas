@@ -8,8 +8,11 @@ respository = "https://github.com/peterhj/libcuda_blas"
 keywords = ["cuda", "blas", "cublas"]
 build = "build.rs"
 
+[features]
+cuda9 = []
+
 [build-dependencies]
-bindgen = "^0.32"
+bindgen = "*"
 
 [dependencies]
 cuda = { path = "../libcuda" }
