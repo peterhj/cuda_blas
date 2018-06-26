@@ -108,8 +108,15 @@ pub struct CublasHandle {
   ptr: cublasHandle_t,
 }
 
-unsafe impl Send for CublasHandle {}
-unsafe impl Sync for CublasHandle {}
+impl Drop for CublasHandle {
+  fn drop(&mut self) {
+    let status = unsafe { cublasDestroy_v2(self.ptr) };
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => {}
+      e => panic!("{}", e),
+    }
+  }
+}
 
 impl CublasHandle {
   pub fn create() -> CublasResult<CublasHandle> {
@@ -123,6 +130,15 @@ impl CublasHandle {
 
   pub unsafe fn as_mut_ptr(&mut self) -> cublasHandle_t {
     self.ptr
+  }
+
+  pub fn get_version(&mut self) -> CublasResult<i32> {
+    let mut version: i32 = -1;
+    let status = unsafe { cublasGetVersion_v2(self.as_mut_ptr(), &mut version as *mut _) };
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(version),
+      e => Err(CublasError(e)),
+    }
   }
 
   pub fn set_stream(&mut self, stream: &mut CudaStream) -> CublasResult<()> {

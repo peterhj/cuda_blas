@@ -31,6 +31,7 @@ fn main() {
     // Helper functions.
     .whitelist_function("cublasCreate_v2")
     .whitelist_function("cublasDestroy_v2")
+    .whitelist_function("cublasGetVersion_v2")
     .whitelist_function("cublasSetStream_v2")
     .whitelist_function("cublasSetPointerMode_v2")
     .whitelist_function("cublasSetAtomicsMode")
