@@ -38,10 +38,15 @@ fn main() {
     .whitelist_function("cublasSetMathMode")
     // Level 1 BLAS.
     .whitelist_function("cublasSaxpy_v2")
+    .whitelist_function("cublasDaxpy_v2")
     .whitelist_function("cublasScopy_v2")
+    .whitelist_function("cublasDcopy_v2")
     .whitelist_function("cublasSdot_v2")
+    .whitelist_function("cublasDdot_v2")
     .whitelist_function("cublasSnrm2_v2")
+    .whitelist_function("cublasDnrm2_v2")
     .whitelist_function("cublasSscal_v2")
+    .whitelist_function("cublasDscal_v2")
     // Level 2 BLAS.
     .whitelist_function("cublasSgemv_v2")
     .whitelist_function("cublasDgemv_v2")

@@ -83,6 +83,11 @@ impl CublasTranspose {
 }
 
 pub trait CublasBlasExt<T> where T: Copy {
+  unsafe fn nrm2(&mut self,
+      n: i32,
+      x: *const T, incx: i32,
+      result: *mut T)
+      -> CublasResult<()>;
   unsafe fn gemv(&mut self,
       a_trans: CublasTranspose,
       m: i32, n: i32,
@@ -176,6 +181,23 @@ impl CublasHandle {
 }
 
 impl CublasBlasExt<f32> for CublasHandle {
+  unsafe fn nrm2(&mut self,
+      n: i32,
+      x: *const f32, incx: i32,
+      result: *mut f32)
+      -> CublasResult<()>
+  {
+    let status = cublasSnrm2_v2(
+        self.as_mut_ptr(),
+        n,
+        x, incx,
+        result);
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }
+  }
+
   unsafe fn gemv(&mut self,
       a_trans: CublasTranspose,
       m: i32, n: i32,
@@ -230,6 +252,23 @@ impl CublasBlasExt<f32> for CublasHandle {
 }
 
 impl CublasBlasExt<f64> for CublasHandle {
+  unsafe fn nrm2(&mut self,
+      n: i32,
+      x: *const f64, incx: i32,
+      result: *mut f64)
+      -> CublasResult<()>
+  {
+    let status = cublasDnrm2_v2(
+        self.as_mut_ptr(),
+        n,
+        x, incx,
+        result);
+    match status {
+      cublasStatus_t_CUBLAS_STATUS_SUCCESS => Ok(()),
+      e => Err(CublasError(e)),
+    }
+  }
+
   unsafe fn gemv(&mut self,
       a_trans: CublasTranspose,
       m: i32, n: i32,
