@@ -4,8 +4,5 @@
 
 use cuda::ffi::library_types::{cudaDataType};
 use cuda::ffi::runtime::{cudaStream_t};
-use float::stub::{f16_stub};
-
-pub type __half = f16_stub;
 
 include!(concat!(env!("OUT_DIR"), "/cublas_bind.rs"));

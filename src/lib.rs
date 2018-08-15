@@ -1,13 +1,13 @@
 #![allow(non_upper_case_globals)]
 
 extern crate cuda;
-extern crate float;
+#[cfg(feature = "f16")] extern crate float;
 
 use ffi::*;
 
 use cuda::ffi::library_types::*;
 use cuda::runtime::*;
-use float::stub::{f16_stub};
+#[cfg(feature = "f16")] use float::stub::{f16_stub};
 
 use std::ptr::{null_mut};
 
@@ -82,12 +82,15 @@ impl CublasTranspose {
   }
 }
 
-pub trait CublasBlasExt<T> where T: Copy {
+pub trait CublasBlas1Ext<T> where T: Copy {
   unsafe fn nrm2(&mut self,
       n: i32,
       x: *const T, incx: i32,
       result: *mut T)
       -> CublasResult<()>;
+}
+
+pub trait CublasBlas2Ext<T> where T: Copy {
   unsafe fn gemv(&mut self,
       a_trans: CublasTranspose,
       m: i32, n: i32,
@@ -97,6 +100,9 @@ pub trait CublasBlasExt<T> where T: Copy {
       beta: *const T,
       y: *mut T, incy: i32)
       -> CublasResult<()>;
+}
+
+pub trait CublasBlas3Ext<T> where T: Copy {
   unsafe fn gemm(&mut self,
       a_trans: CublasTranspose,
       b_trans: CublasTranspose,
@@ -180,7 +186,7 @@ impl CublasHandle {
   }
 }
 
-impl CublasBlasExt<f32> for CublasHandle {
+impl CublasBlas1Ext<f32> for CublasHandle {
   unsafe fn nrm2(&mut self,
       n: i32,
       x: *const f32, incx: i32,
@@ -197,7 +203,9 @@ impl CublasBlasExt<f32> for CublasHandle {
       e => Err(CublasError(e)),
     }
   }
+}
 
+impl CublasBlas2Ext<f32> for CublasHandle {
   unsafe fn gemv(&mut self,
       a_trans: CublasTranspose,
       m: i32, n: i32,
@@ -222,7 +230,9 @@ impl CublasBlasExt<f32> for CublasHandle {
       e => Err(CublasError(e)),
     }
   }
+}
 
+impl CublasBlas3Ext<f32> for CublasHandle {
   unsafe fn gemm(&mut self,
       a_trans: CublasTranspose,
       b_trans: CublasTranspose,
@@ -251,7 +261,7 @@ impl CublasBlasExt<f32> for CublasHandle {
   }
 }
 
-impl CublasBlasExt<f64> for CublasHandle {
+impl CublasBlas1Ext<f64> for CublasHandle {
   unsafe fn nrm2(&mut self,
       n: i32,
       x: *const f64, incx: i32,
@@ -268,7 +278,9 @@ impl CublasBlasExt<f64> for CublasHandle {
       e => Err(CublasError(e)),
     }
   }
+}
 
+impl CublasBlas2Ext<f64> for CublasHandle {
   unsafe fn gemv(&mut self,
       a_trans: CublasTranspose,
       m: i32, n: i32,
@@ -293,7 +305,9 @@ impl CublasBlasExt<f64> for CublasHandle {
       e => Err(CublasError(e)),
     }
   }
+}
 
+impl CublasBlas3Ext<f64> for CublasHandle {
   unsafe fn gemm(&mut self,
       a_trans: CublasTranspose,
       b_trans: CublasTranspose,
@@ -322,21 +336,8 @@ impl CublasBlasExt<f64> for CublasHandle {
   }
 }
 
-/*impl CublasBlasExt<f16_stub> for CublasHandle {
-  unsafe fn gemv(&mut self,
-      _a_trans: CublasTranspose,
-      _m: i32, _n: i32,
-      _alpha: *const f16_stub,
-      _a: *const f16_stub, _lda: i32,
-      _x: *const f16_stub, _incx: i32,
-      _beta: *const f16_stub,
-      _y: *mut f16_stub, _incy: i32)
-      -> CublasResult<()>
-  {
-    // TODO: `cublasHgemv` does not exist.
-    unimplemented!();
-  }
-
+#[cfg(feature = "f16")]
+impl CublasBlas3Ext<f16_stub> for CublasHandle {
   unsafe fn gemm(&mut self,
       a_trans: CublasTranspose,
       b_trans: CublasTranspose,
@@ -365,4 +366,4 @@ impl CublasBlasExt<f64> for CublasHandle {
       e => Err(CublasError(e)),
     }
   }
-}*/
+}
