@@ -17,7 +17,7 @@ f16 = ["float"]
 bindgen = "^0.38"
 
 [dependencies]
-cuda = "^0.2"
+cuda = "^0.3"
 float = { version = "^0.1", optional = true }
 
 [lib]
